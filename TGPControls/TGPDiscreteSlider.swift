@@ -6,6 +6,7 @@ public enum ComponentStyle:Int {
     case rounded
     case invisible
     case image
+    case uiview
 }
 
 //  Interface builder hides the IBInspectable for UIControl
@@ -84,7 +85,13 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         }
     }
 
-    @IBInspectable public var maximumTrackTintColor = UIColor(white: 0.71, alpha: 1) {
+//    @IBInspectable public var maximumTrackTintColor = UIColor(white: 0.71, alpha: 1) {
+//        didSet {
+//            layoutTrack()
+//        }
+//    }
+    
+    @IBInspectable public var maximumTrackTintColor:UIColor? = nil {
         didSet {
             layoutTrack()
         }
@@ -113,7 +120,10 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
     @IBInspectable public var thumbImage:UIImage? = nil {
         didSet {
             if let thumbImage = thumbImage {
-                thumbLayer.contents = thumbImage.cgImage
+                
+               // thumbImage.accessibilityFrame.origin.x = 20
+                    thumbLayer.contents = thumbImage.cgImage
+                //thumbLayer.contents = thumbImage.cgImage
             } else {
                 thumbLayer.contents = nil
             }
@@ -405,21 +415,22 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         if let backgroundColor = minimumTickTintColor ?? (minimumTrackTintColor ?? tintColor) {
             leadingTicksLayer.backgroundColor = backgroundColor.cgColor
         }
-        trailingTicksLayer.backgroundColor = maximumTickTintColor?.cgColor ?? maximumTrackTintColor.cgColor
+      
+        trailingTicksLayer.backgroundColor = maximumTickTintColor?.cgColor ?? maximumTrackTintColor?.cgColor
     }
 
     func drawTrack() {
         switch(trackComponentStyle) {
         case .rectangular:
             trackLayer.frame = trackRectangle
-            trackLayer.cornerRadius = 0.0
+            trackLayer.cornerRadius = 24.0
+           // trackLayer.backgroundColor = UIColor(red:248/255.0, green: 211/255.0, blue: 177/255.0, alpha: 1).cgColor
 
         case .invisible:
             trackLayer.frame = CGRect.zero
 
         case .image:
             trackLayer.frame = CGRect.zero
-
             // Draw image if exists
             if let image = trackImage,
                 let cgImage = image.cgImage,
@@ -453,26 +464,30 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
             var frame = trackLayer.bounds
             frame.size.width = trackRectangle.width - leftTrackLayer.frame.width
             frame.origin.x = leftTrackLayer.frame.maxX
+          
             return frame
         }()
 
         if let backgroundColor = minimumTrackTintColor ?? tintColor {
-            leadingTrackLayer.backgroundColor = backgroundColor.cgColor
+           leadingTrackLayer.backgroundColor = backgroundColor.cgColor
+            leadingTrackLayer.cornerRadius = 24.0
         }
-        trailingTrackLayer.backgroundColor = maximumTrackTintColor.cgColor
+        
+        if let backgroundColor = maximumTrackTintColor ?? (maximumTrackTintColor ?? tintColor) {
+ //           leadingTicksLayer.backgroundColor = backgroundColor.cgColor
+            trackLayer.backgroundColor = backgroundColor.cgColor
+        }
+       // trailingTrackLayer.backgroundColor = UIColor(red:248/255.0, green: 211/255.0, blue: 177/255.0, alpha: 1).cgColor
     }
-
+    
     func drawThumb() {
         if( value >= minimumValue) {  // Feature: hide the thumb when below range
 
             let thumbSizeForStyle = thumbSizeIncludingShadow()
             let thumbWidth = thumbSizeForStyle.width
             let thumbHeight = thumbSizeForStyle.height
-            let rectangle = CGRect(x:thumbAbscissa - (thumbWidth / 2),
-                                   y: (frame.height - thumbHeight)/2,
-                                   width: thumbWidth,
-                                   height: thumbHeight)
-
+            let rectangle = CGRect(x:thumbAbscissa - (thumbWidth / 2) - 26,
+             y: (frame.height - thumbHeight)/2,width: thumbWidth,height: thumbHeight)
             let shadowRadius = (thumbComponentStyle == .iOS) ? iOSThumbShadowRadius : thumbShadowRadius
             let shadowOffset = (thumbComponentStyle == .iOS) ? iOSThumbShadowOffset : thumbShadowOffset
 
@@ -499,7 +514,8 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
                 thumbLayer.allowsEdgeAntialiasing = false
 
             case .rectangular:
-                thumbLayer.backgroundColor = (thumbTintColor ?? UIColor.lightGray).cgColor
+                thumbLayer.frame = CGRect()
+                thumbLayer.backgroundColor = (thumbTintColor ?? UIColor.red).cgColor
                 thumbLayer.borderColor = UIColor.clear.cgColor
                 thumbLayer.borderWidth = 0.0
                 thumbLayer.cornerRadius = 0.0
@@ -510,11 +526,13 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
                 thumbLayer.cornerRadius = 0.0
 
             case .iOS:
+//                let view = UIView.init(frame: CGRect(x: thumbLayer.frame.size.width - 20, y: thumbLayer.frame.size.height/2, width: 30, height: 30))
+//                self.thumbLayer.addSublayer(view)
+                
                 fallthrough
 
             default:
                 thumbLayer.backgroundColor = (thumbTintColor ?? UIColor.white).cgColor
-
                 // Only default iOS thumb has a border
                 if nil == thumbTintColor {
                     let borderColor = UIColor(white:0.5, alpha: 1)
@@ -546,6 +564,8 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
                 thumbLayer.shadowColor = UIColor.clear.cgColor
                 thumbLayer.shadowOpacity = 0.0
             }
+        }else{
+            print("Below range thumb")
         }
     }
 
@@ -568,6 +588,8 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
                                 y: (frame.height - trackSize.height)/2,
                                 width: trackSize.width,
                                 height: trackSize.height)
+      
+        
         let trackY = frame.height / 2
         ticksAbscissae = []
         for iterate in 0 ... segments {
@@ -575,17 +597,16 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
             let originX = trackRectangle.origin.x + (CGFloat)(trackSize.width * CGFloat(ratio))
             ticksAbscissae.append(CGPoint(x: originX, y: trackY))
         }
-        layoutThumb()
+        layoutThumb(tickvalue: 3)
 
         // If we have a TGPDiscreteSliderTicksListener (such as TGPCamelLabels), broadcast new spacing
         ticksListener?.tgpTicksDistanceChanged(ticksDistance:ticksDistance, sender:self)
         setNeedsDisplay()
     }
 
-    func layoutThumb() {
+    func layoutThumb(tickvalue:UInt) {
         assert(tickCount > 1, "2 ticks minimum \(tickCount)")
         let segments = max(1, tickCount - 1)
-
         // Calculate the thumb position
         let nonZeroIncrement = ((0 == incrementValue) ? 1 : incrementValue)
         var thumbRatio = Double(value - minimumValue) / Double(segments * nonZeroIncrement)
@@ -593,7 +614,11 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         thumbRatio = (.rightToLeft == localeCharacterDirection)
             ? 1.0 - thumbRatio
             : thumbRatio
-        thumbAbscissa = trackRectangle.origin.x + (CGFloat)(trackRectangle.width * CGFloat(thumbRatio))
+        if tickvalue == 0{
+            thumbAbscissa = trackRectangle.origin.x + (CGFloat)(trackRectangle.width * CGFloat(thumbRatio) - 26)
+        }else{
+            thumbAbscissa = trackRectangle.origin.x + (CGFloat)(trackRectangle.width * CGFloat(thumbRatio))
+        }
     }
 
     func thumbSizeIncludingShadow() -> CGSize {
@@ -711,33 +736,39 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
     // MARK: Notifications
 
     func moveThumbToTick(tick: UInt) {
-        let nonZeroIncrement = ((0 == incrementValue) ? 1 : incrementValue)
-        let intValue = Int(minimumValue) + (Int(tick) * nonZeroIncrement)
-        if intValue != self.intValue {
-            self.intValue = intValue
-            sendActionsForControlEvents()
+        if tick == 0{
+            
+        }else{
+            let nonZeroIncrement = ((0 == incrementValue) ? 1 : incrementValue)
+            let intValue = Int(minimumValue) + (Int(tick) * nonZeroIncrement)
+            if intValue != self.intValue {
+                self.intValue = intValue
+                sendActionsForControlEvents()
+            }
+            layoutThumb(tickvalue:tick)
+            setNeedsDisplay()
         }
-
-        layoutThumb()
-        setNeedsDisplay()
     }
 
     func moveThumbTo(abscissa:CGFloat, animationDuration duration:TimeInterval) {
         let leftMost = trackRectangle.minX
         let rightMost = trackRectangle.maxX
-
         thumbAbscissa = max(leftMost, min(abscissa, rightMost))
         CATransaction.setAnimationDuration(duration)
+        
+        if thumbAbscissa < 84.0 {
 
-        let tick = pickTickFromSliderPosition(abscissa: thumbAbscissa)
-        let nonZeroIncrement = ((0 == incrementValue) ? 1 : incrementValue)
-        let intValue = Int(minimumValue) + (Int(tick) * nonZeroIncrement)
-        if intValue != self.intValue {
-            self.intValue = intValue
-            sendActionsForControlEvents()
+        }else{
+            let tick = pickTickFromSliderPosition(abscissa: thumbAbscissa)
+            let nonZeroIncrement = ((0 == incrementValue) ? 1 : incrementValue)
+            let intValue = Int(minimumValue) + (Int(tick) * nonZeroIncrement)
+            if intValue != self.intValue {
+                self.intValue = intValue
+                sendActionsForControlEvents()
+            }
+            setNeedsDisplay()
         }
 
-        setNeedsDisplay()
     }
 
     func pickTickFromSliderPosition(abscissa: CGFloat) -> UInt {
@@ -770,5 +801,7 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
     func addTarget(_ target: Any?, action: Selector, for controlEvents: UIControlEvents) {}
     func actions(forTarget target: Any?, forControlEvent controlEvent: UIControlEvents) -> [String]? { return nil }
     func sendAction(_ action: Selector, to target: Any?, for event: UIEvent?) {}
-    #endif // TARGET_INTERFACE_BUILDER    
+    #endif // TARGET_INTERFACE_BUILDER
 }
+
+
