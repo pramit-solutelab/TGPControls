@@ -217,7 +217,6 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
             layoutTrack()
         }
     }
-
     public var ticksDistance:CGFloat {
         get {
             assert(tickCount > 1, "2 ticks minimum \(tickCount)")
@@ -225,11 +224,9 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
             return trackRectangle.width / segments
         }
     }
-
     @objc public var ticksListener:TGPControlsTicksProtocol? = nil {
         didSet {
-            ticksListener?.tgpTicksDistanceChanged(ticksDistance: ticksDistance,
-                                                   sender: self)
+            ticksListener?.tgpTicksDistanceChanged(ticksDistance: ticksDistance,sender: self)
         }
     }
 
@@ -276,7 +273,6 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         drawTicks()
         drawThumb()
     }
-
     func sendActionsForControlEvents() {
         // Automatic UIControlEventValueChanged notification
         if let ticksListener = ticksListener {
@@ -411,12 +407,11 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
             maskLayer.path = path.cgPath
             return maskLayer
         }()
-
         if let backgroundColor = minimumTickTintColor ?? (minimumTrackTintColor ?? tintColor) {
-            leadingTicksLayer.backgroundColor = backgroundColor.cgColor
+                leadingTicksLayer.backgroundColor = backgroundColor.cgColor
         }
-      
         trailingTicksLayer.backgroundColor = maximumTickTintColor?.cgColor ?? maximumTrackTintColor?.cgColor
+        
     }
 
     func drawTrack() {
@@ -424,7 +419,6 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         case .rectangular:
             trackLayer.frame = trackRectangle
             trackLayer.cornerRadius = 24.0
-           // trackLayer.backgroundColor = UIColor(red:248/255.0, green: 211/255.0, blue: 177/255.0, alpha: 1).cgColor
 
         case .invisible:
             trackLayer.frame = CGRect.zero
@@ -576,26 +570,25 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
 
         // Calculate the track ticks positions
         let trackHeight = (.iOS == trackComponentStyle) ? 2 : trackThickness
-        var trackSize = CGSize(width: frame.width - thumbWidth,
-                               height: trackHeight)
+        var trackSize = CGSize(width: frame.width - thumbWidth, height: trackHeight)
         if(.image == trackComponentStyle) {
             if let image = trackImage {
                 trackSize.width = image.size.width - thumbWidth
             }
         }
-
         trackRectangle = CGRect(x: (frame.width - trackSize.width)/2,
                                 y: (frame.height - trackSize.height)/2,
                                 width: trackSize.width,
                                 height: trackSize.height)
-      
-        
         let trackY = frame.height / 2
         ticksAbscissae = []
         for iterate in 0 ... segments {
             let ratio = Double(iterate) / Double(segments)
             let originX = trackRectangle.origin.x + (CGFloat)(trackSize.width * CGFloat(ratio))
-            ticksAbscissae.append(CGPoint(x: originX, y: trackY))
+            if iterate == 0 || iterate == 5{
+            }else {
+                ticksAbscissae.append(CGPoint(x: originX, y: trackY))
+            }
         }
         layoutThumb(tickvalue: 3)
 
@@ -770,7 +763,6 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
         }
 
     }
-
     func pickTickFromSliderPosition(abscissa: CGFloat) -> UInt {
         let leftMost = trackRectangle.minX
         let rightMost = trackRectangle.maxX
@@ -803,5 +795,6 @@ public class TGPDiscreteSlider:TGPSlider_INTERFACE_BUILDER {
     func sendAction(_ action: Selector, to target: Any?, for event: UIEvent?) {}
     #endif // TARGET_INTERFACE_BUILDER
 }
+
 
 
